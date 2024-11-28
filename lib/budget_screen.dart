@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'income_screen.dart';
-import 'expense_screen.dart';
+import 'transaction_type_screen.dart';  // transaction_type_screen.dart 파일을 import
 
 class BudgetScreen extends StatefulWidget {
   @override
@@ -8,90 +7,154 @@ class BudgetScreen extends StatefulWidget {
 }
 
 class _BudgetScreenState extends State<BudgetScreen> {
-  // 수입/지출 데이터를 관리할 리스트
-  List<Map<String, dynamic>> transactions = [];
+  int _selectedIndex = 0;  // 하단 네비게이션의 선택된 버튼 인덱스
+  DateTime _currentDate = DateTime.now();  // 현재 날짜
+  late String _formattedDate; // 날짜를 표시할 형식
 
-  // 빈 화면 위젯
-  Widget _buildEmptyState() {
-    return Center(
-      child: Text(
-        '데이터가 없습니다.\n새로운 거래를 추가해보세요!',
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 18, color: Colors.grey),
-      ),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _formattedDate = "${_currentDate.year}년 ${_currentDate.month}월"; // 날짜 형식 지정
   }
 
-  // 데이터 리스트 화면 위젯
-  Widget _buildTransactionList() {
-    return ListView.builder(
-      itemCount: transactions.length,
-      itemBuilder: (context, index) {
-        final transaction = transactions[index];
-        final isExpense = transaction['type'] == 'expense';
-
-        return ListTile(
-          leading: Icon(
-            isExpense ? Icons.remove : Icons.add,
-            color: isExpense ? Colors.red : Colors.green,
-          ),
-          title: Text(transaction['category']),
-          subtitle: Text('${transaction['date']} | ${transaction['memo']}'),
-          trailing: Text(
-            '${isExpense ? '-' : '+'}${transaction['amount']}원',
-            style: TextStyle(
-              color: isExpense ? Colors.red : Colors.green,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
-      },
-    );
+  // 하단 네비게이션 바에서 아이템을 선택했을 때의 처리
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
-  // 데이터 추가 처리 함수
-  Future<void> _addTransaction(BuildContext context, bool isExpense) async {
-    // 수입 또는 지출 화면으로 이동하고 결과를 기다림
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => isExpense ? ExpenseScreen() : IncomeScreen(),
-      ),
-    );
+  // 이전 달로 이동
+  void _previousMonth() {
+    setState(() {
+      _currentDate = DateTime(_currentDate.year, _currentDate.month - 1);
+      _formattedDate = "${_currentDate.year}년 ${_currentDate.month}월";
+    });
+  }
 
-    // 결과를 리스트에 추가
-    if (result != null) {
-      setState(() {
-        transactions.add(result);
-      });
-    }
+  // 다음 달로 이동
+  void _nextMonth() {
+    setState(() {
+      _currentDate = DateTime(_currentDate.year, _currentDate.month + 1);
+      _formattedDate = "${_currentDate.year}년 ${_currentDate.month}월";
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // 상단 영역
       appBar: AppBar(
         title: Text('가계부'),
-      ),
-      body: transactions.isEmpty ? _buildEmptyState() : _buildTransactionList(),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            heroTag: "income",
-            onPressed: () => _addTransaction(context, false), // 수입 추가
-            child: Icon(Icons.add),
-            tooltip: '수입 추가',
-          ),
-          SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: "expense",
-            onPressed: () => _addTransaction(context, true), // 지출 추가
-            child: Icon(Icons.remove),
-            tooltip: '지출 추가',
+        actions: [
+          IconButton(
+            icon: Icon(Icons.calendar_today),
+            onPressed: () {
+              // 달력 아이콘 클릭 시 동작 (필요시 동작 추가)
+            },
           ),
         ],
       ),
+      body: Column(
+        children: [
+          // 날짜, 주기, 금액, 카테고리, 메모 입력 영역 (상단 영역 아래)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // 이전 달 버튼
+                IconButton(
+                  icon: Icon(Icons.arrow_left),
+                  onPressed: _previousMonth,
+                ),
+                // 현재 달 표시
+                Text(
+                  _formattedDate,
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                // 다음 달 버튼
+                IconButton(
+                  icon: Icon(Icons.arrow_right),
+                  onPressed: _nextMonth,
+                ),
+              ],
+            ),
+          ),
+          // 메인 영역 (수입, 지출, 합계 영역)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text('수입', style: TextStyle(fontSize: 16, color: Colors.blue)),
+                    Text('0', style: TextStyle(fontSize: 24, color: Colors.blue)),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text('지출', style: TextStyle(fontSize: 16, color: Colors.red)),
+                    Text('0', style: TextStyle(fontSize: 24, color: Colors.red)),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Text('합계', style: TextStyle(fontSize: 16)),
+                    Text('0', style: TextStyle(fontSize: 24)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      // + 버튼을 우측 하단에 배치
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 수입/지출 추가 화면으로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => TransactionTypeScreen()),
+          );
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Colors.blue,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,  // + 버튼을 우측 하단에 배치
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_balance_wallet),
+            label: '가계부',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.attach_money),
+            label: '예산',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pie_chart),
+            label: '통계',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: '설정',
+          ),
+        ],
+        selectedItemColor: Colors.blue, // 선택된 아이템 색상
+        unselectedItemColor: Colors.black54, // 선택되지 않은 아이템 색상
+        showUnselectedLabels: true,  // 선택되지 않은 아이템에도 레이블을 표시
+        backgroundColor: Colors.white, // 네비게이션 바 배경색
+      ),
     );
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    home: BudgetScreen(),
+  ));
 }

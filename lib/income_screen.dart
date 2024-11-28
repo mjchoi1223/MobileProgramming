@@ -106,6 +106,57 @@ class _IncomeScreenState extends State<IncomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 수입/지출 선택 버튼 추가
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30.0), // 상단 간격 조정
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          // 버튼 높이 축소
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          // 수입 추가 페이지로 이동
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => IncomeScreen()),
+                          );
+                        },
+                        child: Text('수입', style: TextStyle(
+                            fontSize: 16)), // 텍스트 크기 조정
+                      ),
+                    ),
+                    SizedBox(width: 30), // 버튼 간 간격 확장
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          // 버튼 높이 축소
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () {
+                          // 지출 추가 페이지로 이동
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ExpenseScreen()),
+                          );
+                        },
+                        child: Text('지출', style: TextStyle(
+                            fontSize: 16)), // 텍스트 크기 조정
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               // 날짜 선택
               Row(
                 children: [
@@ -148,18 +199,24 @@ class _IncomeScreenState extends State<IncomeScreen> {
                               });
                             },
                             child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 10, horizontal: 15),
                               decoration: BoxDecoration(
-                                color: selectedRecurrence == recurrence ? Colors.blue : Colors.grey[200],
+                                color: selectedRecurrence == recurrence ? Colors
+                                    .blue : Colors.grey[200],
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: selectedRecurrence == recurrence ? Colors.blue : Colors.grey,
+                                  color: selectedRecurrence == recurrence
+                                      ? Colors.blue
+                                      : Colors.grey,
                                 ),
                               ),
                               child: Text(
                                 recurrence,
                                 style: TextStyle(
-                                  color: selectedRecurrence == recurrence ? Colors.white : Colors.black,
+                                  color: selectedRecurrence == recurrence
+                                      ? Colors.white
+                                      : Colors.black,
                                 ),
                               ),
                             ),
@@ -170,64 +227,94 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 ],
               ),
               SizedBox(height: 30),
-              // 카테고리 버튼
-              Row(
+              Column(
                 children: [
-                  Text(
-                    '카테고리 ',
-                    style: TextStyle(fontSize: 40),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 8.0, // 버튼 간 간격
-                      runSpacing: 8.0, // 줄 간 간격
-                      children: ['월급', '용돈', '투자', '기타'].map((category) {
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedCategory = category;
-                            });
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                            decoration: BoxDecoration(
-                              color: selectedCategory == category ? Colors.blue : Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: selectedCategory == category ? Colors.blue : Colors.grey,
-                              ),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(
-                                color: selectedCategory == category ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 30),
-              // 메모 입력
-              Row(
-                children: [
-                  Text(
-                    '메모 ',
-                    style: TextStyle(fontSize: 40),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: memoController,
-                      decoration: InputDecoration(
-                        hintText: '메모 입력 (선택 사항)',
-                        border: OutlineInputBorder(),
+                  // 금액 입력
+                  Row(
+                    children: [
+                      Text(
+                        '금액 ',
+                        style: TextStyle(fontSize: 40),
                       ),
-                    ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: amountController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: '금액 입력',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 30),
+                  // 카테고리 선택
+// 카테고리 버튼
+                  Row(
+                    children: [
+                      Text(
+                        '카테고리 ',
+                        style: TextStyle(fontSize: 40),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8.0, // 버튼 간 간격
+                          runSpacing: 8.0, // 줄 간 간격
+                          children: ['월급', '용돈', '투자', '기타'].map((category) {
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedCategory = category;
+                                });
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 10, horizontal: 15),
+                                decoration: BoxDecoration(
+                                  color: selectedCategory == category ? Colors
+                                      .blue : Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: selectedCategory == category ? Colors
+                                        .blue : Colors.grey,
+                                  ),
+                                ),
+                                child: Text(
+                                  category,
+                                  style: TextStyle(
+                                    color: selectedCategory == category ? Colors
+                                        .white : Colors.black,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 30),
+                  // 메모 입력
+                  Row(
+                    children: [
+                      Text(
+                        '메모 ',
+                        style: TextStyle(fontSize: 40),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: memoController,
+                          decoration: InputDecoration(
+                            hintText: '메모 입력 (선택 사항)',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'MainScreen.dart'; // 로그인 성공 후 이동할 메인 화면 import
+import 'budget_screen.dart'; //테스트용 예산 탭으로 이동
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -29,11 +30,12 @@ class _LoginScreenState extends State<LoginScreen> {
       // 로그인 성공 시 메인 화면으로 이동
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
+        //MaterialPageRoute(builder: (context) => MainScreen()),
+        MaterialPageRoute(builder: (context) => BudgetScreen()),  //태스트 용 예산 탭으로 이동
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요.")),
+          SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요. $e")),
       );
     }
   }

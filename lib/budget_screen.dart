@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'transaction_type_screen.dart';  // transaction_type_screen.dart 파일을 import
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:front/login_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
   @override
@@ -39,6 +41,25 @@ class _BudgetScreenState extends State<BudgetScreen> {
       _formattedDate = "${_currentDate.year}년 ${_currentDate.month}월";
     });
   }
+
+  void _logout() async {
+    try {
+      await FirebaseAuth.instance.signOut(); // Firebase 로그아웃
+      // 로그인 화면으로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginScreen()), // LoginScreen 이동
+      );
+    } catch (e) {
+      print('로그아웃 중 오류 발생: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('로그아웃에 실패했습니다. 다시 시도하세요.')),
+      );
+    }
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -108,8 +129,24 @@ class _BudgetScreenState extends State<BudgetScreen> {
               ],
             ),
           ),
-        ],
+
+
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: GestureDetector(
+          onTap: _logout, // 로그아웃 동작 연결
+          child: Text(
+            '로그아웃',
+            style: TextStyle(
+              fontSize: 16,
+              decoration: TextDecoration.underline, // 밑줄
+              color: Colors.blue,
+            ),
+          ),
+        ),
       ),
+      ],
+    ),
       // + 버튼을 우측 하단에 배치
       floatingActionButton: FloatingActionButton(
         onPressed: () {

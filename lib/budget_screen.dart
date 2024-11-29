@@ -66,7 +66,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return Scaffold(
       // 상단 영역
       appBar: AppBar(
-        title: Text('가계부'),
         actions: [
           IconButton(
             icon: Icon(Icons.calendar_today),

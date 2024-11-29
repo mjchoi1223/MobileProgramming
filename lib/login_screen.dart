@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'MainScreen.dart'; // 로그인 성공 후 이동할 메인 화면 import
 import 'budget_screen.dart'; //테스트용 예산 탭으로 이동
 
 class LoginScreen extends StatefulWidget {
@@ -44,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("로그인"),
       ),
       body: Center(
         child: Column(

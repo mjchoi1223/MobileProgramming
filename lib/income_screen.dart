@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'expense_screen.dart'; // 지출 추가 화면
+import 'budget_screen.dart'; // 가계부 화면
 
 class IncomeScreen extends StatefulWidget {
   @override
@@ -58,33 +59,64 @@ class _IncomeScreenState extends State<IncomeScreen> {
     );
   }
 
-  // 저장 버튼 동작
+  void _showWarningDialog1(String message, {Function? onConfirm}) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('경고'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                if (onConfirm != null) onConfirm();
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// 저장 버튼 동작
   void _saveData() {
     if (amountController.text.isEmpty) {
-      _showWarningDialog('금액을 입력해주세요.');
+      _showWarningDialog1('금액을 입력해주세요.');
       return;
     } else if (selectedCategory.isEmpty) {
-      _showWarningDialog('카테고리를 선택해주세요.');
+      _showWarningDialog1('카테고리를 선택해주세요.');
       return;
     } else if (memoController.text.isEmpty) {
-      _showWarningDialog('메모를 입력해주세요.');
+      _showWarningDialog1('메모를 입력해주세요.');
       return;
     }
 
-    Navigator.pop(context, {
-      'date': selectedDate.toLocal().toString().split(' ')[0],
-      'recurrence': selectedRecurrence,
-      'amount': int.parse(amountController.text),
-      'category': selectedCategory,
-      'memo': memoController.text,
-    });
+    // 데이터를 저장하는 로직 (예시)
+    final incomeData = {
+      'income_date': selectedDate.toLocal().toString().split(' ')[0],
+      'income_recurrence': selectedRecurrence,
+      'income_amount': int.parse(amountController.text),
+      'income_category': selectedCategory,
+      'income_memo': memoController.text,
+    };
+
+    // BudgetScreen으로 이동
+    Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BudgetScreen(),
+          //settings: RouteSettings(arguments: {'type': 'income', 'amount': incomeData['income_amount']}),
+        ), (route) => false
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('수입 추가'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -92,10 +124,16 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 categoryController.text.isNotEmpty ||
                 memoController.text.isNotEmpty) {
               _showWarningDialog('입력된 내용이 사라집니다. 취소하시겠습니까?', onConfirm: () {
-                Navigator.pop(context);
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => BudgetScreen()), (route) => false
+                );
               });
             } else {
-              Navigator.pop(context);
+              Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => BudgetScreen()), (route) => false
+              );
             }
           },
         ),
@@ -114,19 +152,13 @@ class _IncomeScreenState extends State<IncomeScreen> {
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 15),
+                          padding: EdgeInsets.symmetric(vertical: 15), backgroundColor: Colors.lightBlue,  // 배경색을 연한 파랑색으로 설정
                           // 버튼 높이 축소
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
                         onPressed: () {
-                          // 수입 추가 페이지로 이동
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => IncomeScreen()),
-                          );
                         },
                         child: Text('수입', style: TextStyle(
                             fontSize: 16)), // 텍스트 크기 조정
@@ -144,7 +176,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         ),
                         onPressed: () {
                           // 지출 추가 페이지로 이동
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (context) => ExpenseScreen()),
@@ -309,7 +341,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                         child: TextField(
                           controller: memoController,
                           decoration: InputDecoration(
-                            hintText: '메모 입력 (선택 사항)',
+                            hintText: '메모 입력  ',
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -319,7 +351,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
                 ],
               ),
               SizedBox(height: 20),
-              // 저장 버튼
+              // 저장/취소 버튼
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -328,9 +360,17 @@ class _IncomeScreenState extends State<IncomeScreen> {
                       if (amountController.text.isNotEmpty ||
                           categoryController.text.isNotEmpty ||
                           memoController.text.isNotEmpty) {
-                        _showWarningDialog('입력된 내용이 사라집니다. 취소하시겠습니까?');
+                        _showWarningDialog('입력된 내용이 사라집니다. 취소하시겠습니까?', onConfirm: () {
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(builder: (context) => BudgetScreen()), (route) => false
+                          );
+                        });
                       } else {
-                        Navigator.pop(context);
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => BudgetScreen()), (route) => false
+                        );
                       }
                     },
                     child: Text('취소'),

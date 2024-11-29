@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'expense_screen.dart'; // 지출 추가 화면
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class IncomeScreen extends StatefulWidget {
   @override
@@ -59,7 +60,7 @@ class _IncomeScreenState extends State<IncomeScreen> {
   }
 
   // 저장 버튼 동작
-  void _saveData() {
+  void _saveData() async{
     if (amountController.text.isEmpty) {
       _showWarningDialog('금액을 입력해주세요.');
       return;
@@ -71,14 +72,35 @@ class _IncomeScreenState extends State<IncomeScreen> {
       return;
     }
 
-    Navigator.pop(context, {
-      'date': selectedDate.toLocal().toString().split(' ')[0],
-      'recurrence': selectedRecurrence,
-      'amount': int.parse(amountController.text),
-      'category': selectedCategory,
-      'memo': memoController.text,
-    });
+    // Firestore에 데이터 저장
+    try {
+      await FirebaseFirestore.instance.collection('recordtest').add({
+        'date': selectedDate.toLocal().toString().split(' ')[0], // 날짜
+        'type': '수입',  // 수입 고정
+        'amount': int.parse(amountController.text), // 금액
+        'category': selectedCategory, // 카테고리
+        'note': memoController.text, // 메모
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('데이터가 저장되었습니다.')),
+      );
+      Navigator.pop(context); // 이전 화면으로 이동
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('데이터 저장에 실패했습니다: $e')),
+      );
+    }
   }
+
+  //   Navigator.pop(context, {
+  //     'date': selectedDate.toLocal().toString().split(' ')[0],
+  //     'recurrence': selectedRecurrence,
+  //     'amount': int.parse(amountController.text),
+  //     'category': selectedCategory,
+  //     'memo': memoController.text,
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

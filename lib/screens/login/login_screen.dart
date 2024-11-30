@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'budget_screen.dart'; //테스트용 예산 탭으로 이동
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -12,11 +11,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  // Google Sign-In을 통한 Firebase 로그인
   Future<void> _signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // 로그인 취소 시
+      if (googleUser == null) return;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -25,16 +23,11 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       await _auth.signInWithCredential(credential);
-
-      // 로그인 성공 시 메인 화면으로 이동
-      Navigator.pushReplacement(
-        context,
-        //MaterialPageRoute(builder: (context) => MainScreen()),
-        MaterialPageRoute(builder: (context) => BudgetScreen()),  //태스트 용 예산 탭으로 이동
-      );
+      Navigator.pushReplacementNamed(context, '/main');
     } catch (e) {
+      print("로그인 실패: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요. $e")),
+        SnackBar(content: Text("로그인에 실패했습니다. 다시 시도해주세요.")),
       );
     }
   }
@@ -43,6 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text("로그인"),
+        centerTitle: true,
       ),
       body: Center(
         child: Column(

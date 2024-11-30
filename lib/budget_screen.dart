@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'transaction_type_screen.dart';  // transaction_type_screen.dart 파일을 import
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/login_screen.dart';
+import 'budgeting_screen.dart';
+import 'statistics_screen.dart';
+import 'settings_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
   @override
@@ -12,6 +15,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
   int _selectedIndex = 0;  // 하단 네비게이션의 선택된 버튼 인덱스
   DateTime _currentDate = DateTime.now();  // 현재 날짜
   late String _formattedDate; // 날짜를 표시할 형식
+
+  // 각 화면을 리스트로 정의
+  final List<Widget> _screens = [
+    BudgetScreen(),        // 가계부 화면
+    BudgetingScreen(),     // 예산 화면
+    StatisticsScreen(),    // 통계 화면
+    SettingsScreen(),      // 설정 화면
+  ];
 
   @override
   void initState() {
@@ -57,9 +68,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
       );
     }
   }
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -128,8 +136,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
               ],
             ),
           ),
-
-
       Padding(
         padding: const EdgeInsets.only(bottom: 16.0),
         child: GestureDetector(
@@ -159,6 +165,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         backgroundColor: Colors.blue,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,  // + 버튼을 우측 하단에 배치
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,

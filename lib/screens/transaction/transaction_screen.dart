@@ -57,8 +57,12 @@ class _TransactionScreenState extends State<TransactionScreen> {
         SnackBar(content: Text("저장되었습니다!")),
       );
 
-      // 저장 후 MainNavigation으로 돌아가기
-      Navigator.pushReplacementNamed(context, '/main', arguments: {'initialIndex': 0});
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/main', // 이동할 경로
+        (route) => false, // 기존 화면 스택 제거
+        arguments: {'initialIndex': 0}, // BudgetScreen 탭 인덱스 전달
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("저장 실패: $e")),

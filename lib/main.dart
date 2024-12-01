@@ -5,12 +5,22 @@ import 'package:front/navigation/main_navigation.dart';
 import 'package:front/screens/login/login_screen.dart';
 import 'package:front/screens/transaction/transaction_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:front/screens/budget/budget_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  try {
+    print('Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Firebase initialization failed: $e');
+  }
   runApp(MyApp());
 }
 
@@ -31,6 +41,7 @@ class MyApp extends StatelessWidget {
           return MainNavigation(initialIndex: initialIndex);
         },
         '/transaction': (context) => TransactionScreen(),
+        '/budget': (context) => BudgetScreen(),
       },
     );
   }
@@ -39,16 +50,19 @@ class MyApp extends StatelessWidget {
 class AuthHandler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    print('Checking authentication state...');
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
+          print('Authentication: Waiting for connection...');
           return Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
         if (snapshot.hasError) {
+          print('Authentication Error: ${snapshot.error}');
           return Scaffold(
             body: Center(
               child: Text('인증 상태 오류: ${snapshot.error}'),
@@ -57,6 +71,7 @@ class AuthHandler extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
+          print('User authenticated: ${snapshot.data}');
           Future.microtask(() => Navigator.pushReplacementNamed(
                 context,
                 '/main',
@@ -65,6 +80,7 @@ class AuthHandler extends StatelessWidget {
           return SizedBox.shrink();
         }
 
+        print('User not authenticated. Redirecting to login screen...');
         Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
         return SizedBox.shrink();
       },

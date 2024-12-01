@@ -51,7 +51,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false); // '/login' 경로로 이동
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -13,6 +13,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _signInWithGoogle() async {
     try {
+
+      await _googleSignIn.signOut();  //자동 로그인 방지 테스트
+
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return;
 

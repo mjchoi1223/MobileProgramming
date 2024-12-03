@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TransactionScreen extends StatefulWidget {
+
+  final String userId;
+
+  TransactionScreen({required this.userId});
   @override
   _TransactionScreenState createState() => _TransactionScreenState();
 }
@@ -49,6 +53,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       'amount': int.parse(_amountController.text),
       'category': _selectedCategory,
       'memo': _memoController.text,
+      'userId': widget.userId,  // userId 추가
     };
 
     try {

@@ -6,6 +6,7 @@ import 'package:front/screens/login/login_screen.dart';
 import 'package:front/screens/transaction/transaction_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:front/screens/budget/budget_screen.dart';
+import 'package:front/screens/statistics/statistics_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,7 +41,21 @@ class MyApp extends StatelessWidget {
           final initialIndex = args['initialIndex'] ?? 0;
           return MainNavigation(initialIndex: initialIndex);
         },
-        '/transaction': (context) => TransactionScreen(),
+        '/statistics': (context) {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId == null) {
+            return LoginScreen();
+          }
+          return StatisticsScreen(userId: userId);  // userId 전달
+        },
+        '/transaction': (context) {
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          if (userId != null) {
+            return TransactionScreen(userId: userId);
+          } else {
+            return LoginScreen();
+          }
+        },
         '/budget': (context) => BudgetScreen(),
       },
     );

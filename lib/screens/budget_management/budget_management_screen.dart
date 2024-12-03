@@ -22,6 +22,8 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
     super.initState();
     _fetchOrCreateBudget(); // Firestore에서 예산 가져오거나 생성
     _fetchTotalExpense(); // Firestore에서 지출 합계 가져오기
+    print('UserId: ${widget.userId}');
+    print('DocId: $_docId');
   }
 
   /// 고유한 `docId` 생성 (userId + 월)

@@ -85,6 +85,55 @@ class _BudgetScreenState extends State<BudgetScreen> {
     });
   }
 
+  void _showEditDeleteMenu(BuildContext context, DocumentSnapshot transaction) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Wrap(
+          children: [
+            ListTile(
+              leading: Icon(Icons.edit),
+              title: Text("수정"),
+              onTap: () {
+                Navigator.pop(context);
+                _editTransaction(transaction);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete),
+              title: Text("삭제"),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteTransaction(transaction);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _editTransaction(DocumentSnapshot transaction) {
+    // 수정 로직
+    print("수정: ${transaction['category']}");
+  }
+
+  void _deleteTransaction(DocumentSnapshot transaction) {
+    transaction.reference.delete().then((_) {
+      // 합계 값 업데이트
+      _calculateMonthlyTotals();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("삭제 완료")),
+      );
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("삭제 실패: $error")),
+      );
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -219,16 +268,19 @@ class _BudgetScreenState extends State<BudgetScreen> {
             final date = (transaction['date'] as Timestamp).toDate();
             final memo = transaction['memo'];
 
-            return ListTile(
-              title: Text(category),
-              subtitle: Text(memo),
-              trailing: Text(
-                (type == 'income' ? "+" : "-") + "$amount",
-                style: TextStyle(
-                  color: type == 'income' ? Colors.blue : Colors.red,
+            return GestureDetector(
+              onLongPress: () => _showEditDeleteMenu(context, transaction),
+              child: ListTile(
+                title: Text(category),
+                subtitle: Text(memo),
+                trailing: Text(
+                  (type == 'income' ? "+" : "-") + "$amount",
+                  style: TextStyle(
+                    color: type == 'income' ? Colors.blue : Colors.red,
+                  ),
                 ),
+                leading: Text("${date.day}일"),
               ),
-              leading: Text("${date.day}일"),
             );
           },
         );

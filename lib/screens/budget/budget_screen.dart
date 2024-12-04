@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
+
 
 class BudgetScreen extends StatefulWidget {
   @override
@@ -15,12 +17,29 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   int totalIncome = 0;
   int totalExpense = 0;
+  String? userId;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    _initializeUserId();
     _calculateMonthlyTotals();
+  }
+
+  // Firebase에서 userId 가져오기
+  Future<void> _initializeUserId() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
+    } else {
+      setState(() {
+        userId = user.uid;
+      });
+    }
   }
 
   Stream<QuerySnapshot> _getTransactions(DateTime start, DateTime end) {
@@ -28,6 +47,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         .collection('transactions')
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('date', isLessThan: Timestamp.fromDate(end))
+        .where('userId', isEqualTo: userId) // userId 추가
         .orderBy('date', descending: true) // 날짜 기준 내림차순 정렬
         .snapshots();
   }

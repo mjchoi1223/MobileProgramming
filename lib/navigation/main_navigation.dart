@@ -43,7 +43,9 @@ class _MainNavigationState extends State<MainNavigation> {
     return [
       BudgetScreen(), // 가계부 화면
       BudgetManagementScreen(userId: userId ?? ''), // 예산 관리 화면
-      StatisticsScreen(), // 통계 화면
+      userId == null
+          ? Center(child: CircularProgressIndicator()) // userId가 없을 때 로딩 표시
+          : StatisticsScreen(userId: userId!), // 통계 화면, userId 전달
       SettingsScreen(), // 설정 화면
     ];
   }

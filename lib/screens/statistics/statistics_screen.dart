@@ -3,6 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class StatisticsScreen extends StatefulWidget {
+  final String userId;
+
+  StatisticsScreen({required this.userId});
+
   @override
   _StatisticsScreenState createState() => _StatisticsScreenState();
 }
@@ -78,7 +82,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           SizedBox(height: 20),
           Expanded(
             child: FutureBuilder<QuerySnapshot>(
-              future: _firestore.collection('transactions').get(),
+              future: _firestore.collection('transactions').
+              where('userId', isEqualTo: widget.userId).
+              get(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
                 final transactions = snapshot.data!.docs.where((doc) {

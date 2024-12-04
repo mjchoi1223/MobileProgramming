@@ -23,8 +23,15 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
 
     _fetchTotalBudget(); // Firestore에서 총 예산 가져오기
     _fetchTotalExpense(); // Firestore에서 지출 합계를 가져오는 메서드 호출
+    print('UserId: ${widget.userId}');
+    print('DocId: $_docId');
   }
 
+  // 고유한 `docId` 생성 (userId + 월)
+  String get _docId {
+    final monthId = DateFormat('yyyy-MM').format(_selectedMonth);
+    return "${widget.userId}_$monthId";
+  }
 
   // Firestore에서 총 예산(total_budget) 가져오기
   Future<void> _fetchTotalBudget() async {

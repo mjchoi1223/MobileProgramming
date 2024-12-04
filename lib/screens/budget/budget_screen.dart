@@ -114,13 +114,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   void _editTransaction(DocumentSnapshot transaction) {
-    // 수정 로직
-    print("수정: ${transaction['category']}");
+    //수정 로직 추가
   }
 
   void _deleteTransaction(DocumentSnapshot transaction) {
     transaction.reference.delete().then((_) {
-      // 합계 값 업데이트
+      // 수입, 지출, 합계 값 업데이트
       _calculateMonthlyTotals();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -132,7 +131,6 @@ class _BudgetScreenState extends State<BudgetScreen> {
       );
     });
   }
-
 
   @override
   Widget build(BuildContext context) {

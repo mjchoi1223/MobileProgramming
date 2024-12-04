@@ -38,6 +38,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     } else {
       setState(() {
         userId = user.uid;
+        print('현재 로그인한 사용자 UID: $userId');
       });
     }
   }
@@ -84,6 +85,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
         .collection('transactions')
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
         .where('date', isLessThan: Timestamp.fromDate(endOfMonth))
+        .where('userId', isEqualTo: userId) // userId 추가
+        .orderBy('date', descending: true) // 날짜 기준 내림차순 정렬
         .get();
 
     double income = 0;

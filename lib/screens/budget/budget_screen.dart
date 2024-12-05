@@ -282,12 +282,28 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   final memo = transaction['memo'];
 
                   return ListTile(
-                    title: Text(category),
-                    subtitle: Text(memo),
+                    title: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        SizedBox(width: 50),
+                        Expanded(
+                          child: Text(
+                            memo,
+                            style: TextStyle(fontSize: 18),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                     trailing: Text(
                       (type == 'income' ? "+" : "-") + "$amount",
                       style: TextStyle(
                         color: type == 'income' ? Colors.blue : Colors.red,
+                        fontSize: 16,
                       ),
                     ),
                     onTap: () {
@@ -295,7 +311,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => TransactionScreen(
-                            transactionId: transaction['id'], // 전달
+                            transactionId: transaction['id'],
                           ),
                         ),
                       );
@@ -362,14 +378,40 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   final memo = transaction['memo'];
 
                   return ListTile(
-                    title: Text(category),
-                    subtitle: Text(memo),
+                    title: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          category,
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
+                        SizedBox(width: 50),
+                        Expanded(
+                          child: Text(
+                            memo,
+                            style: TextStyle(fontSize: 18),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                     trailing: Text(
                       (type == 'income' ? "+" : "-") + "$amount",
                       style: TextStyle(
                         color: type == 'income' ? Colors.blue : Colors.red,
+                        fontSize: 16,
                       ),
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransactionScreen(
+                            transactionId: transaction.id,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               );

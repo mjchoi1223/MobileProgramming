@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TransactionScreen extends StatefulWidget {
   final String? transactionId; // Optional parameter for editing
@@ -12,7 +13,7 @@ class TransactionScreen extends StatefulWidget {
 
 class _TransactionScreenState extends State<TransactionScreen> {
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _memoController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController(); // 메모를 내용으로 변경
   String _selectedType = 'income';
   String _selectedCategory = '';
   DateTime _selectedDate = DateTime.now();
@@ -23,11 +24,28 @@ class _TransactionScreenState extends State<TransactionScreen> {
     'expense': ['식비', '교통', '쇼핑', '생활', '기타']
   };
 
+  String? userId;
+
   @override
   void initState() {
     super.initState();
+    _initializeUserId();
     if (widget.transactionId != null) {
       _loadTransaction();
+    }
+  }
+
+  Future<void> _initializeUserId() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        userId = user.uid;
+      });
+    } else {
+      // 로그인 화면으로 리디렉션
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacementNamed(context, '/login');
+      });
     }
   }
 
@@ -49,7 +67,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
           _selectedCategory = data['category'];
           _selectedDate = (data['date'] as Timestamp).toDate();
           _amountController.text = data['amount'].toString();
-          _memoController.text = data['memo'];
+          _contentController.text = data['memo']; // "메모"를 불러오기
         });
       }
     } catch (e) {
@@ -62,7 +80,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   Future<void> _saveTransaction() async {
-    if (_amountController.text.isEmpty || _selectedCategory.isEmpty) {
+    if (_amountController.text.isEmpty ||
+        _selectedCategory.isEmpty ||
+        _contentController.text.isEmpty ||
+        userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("모든 필드를 입력해주세요!")),
       );
@@ -70,22 +91,21 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
 
     final data = {
+      'userId': userId, // 사용자 ID 추가
       'type': _selectedType,
       'date': Timestamp.fromDate(_selectedDate),
       'amount': int.parse(_amountController.text),
       'category': _selectedCategory,
-      'memo': _memoController.text,
+      'memo': _contentController.text, // "내용"으로 저장
     };
 
     try {
       if (widget.transactionId == null) {
-        // Create a new transaction
         await FirebaseFirestore.instance.collection('transactions').add(data);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("저장되었습니다!")),
         );
       } else {
-        // Update an existing transaction
         await FirebaseFirestore.instance
             .collection('transactions')
             .doc(widget.transactionId)
@@ -160,7 +180,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 수입/지출 선택
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -172,9 +191,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     },
                     child: Text("수입"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedType == 'income'
-                          ? Colors.blue
-                          : Colors.grey,
+                      backgroundColor:
+                          _selectedType == 'income' ? Colors.blue : Colors.grey,
                     ),
                   ),
                   ElevatedButton(
@@ -185,15 +203,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     },
                     child: Text("지출"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedType == 'expense'
-                          ? Colors.red
-                          : Colors.grey,
+                      backgroundColor:
+                          _selectedType == 'expense' ? Colors.red : Colors.grey,
                     ),
                   ),
                 ],
               ),
               SizedBox(height: 20),
-              // 날짜 선택
               Row(
                 children: [
                   Text("날짜: "),
@@ -207,14 +223,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 ],
               ),
               SizedBox(height: 20),
-              // 금액 입력
               TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(labelText: "금액"),
               ),
               SizedBox(height: 20),
-              // 분류 선택
+              TextField(
+                controller: _contentController,
+                decoration: InputDecoration(labelText: "내용"), // "메모"를 "내용"으로 변경
+              ),
+              SizedBox(height: 20),
               Text("분류:"),
               Wrap(
                 spacing: 10.0,
@@ -231,13 +250,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 }).toList(),
               ),
               SizedBox(height: 20),
-              // 메모 입력
-              TextField(
-                controller: _memoController,
-                decoration: InputDecoration(labelText: "메모"),
-              ),
-              SizedBox(height: 20),
-              // 저장/취소 버튼
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [

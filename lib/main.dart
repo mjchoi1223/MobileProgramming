@@ -9,9 +9,60 @@ import 'package:front/screens/budget/budget_screen.dart';
 import 'package:front/screens/statistics/statistics_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:front/theme_provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+// 알림 초기화
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> requestNotificationPermission() async {
+  final status = await Permission.notification.request();
+
+  if (status.isGranted) {
+    print('Notification permission granted');
+  } else {
+    print('Notification permission denied');
+  }
+}
+
+
+Future<void> initializeNotifications() async {
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('splash'); // 앱 아이콘 필요
+  const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+}
+
+Future<void> showBudgetExceededNotification() async {
+  const AndroidNotificationDetails androidNotificationDetails =
+      AndroidNotificationDetails(
+    'budget_exceeded_channel', // 채널 ID
+    'Budget Exceeded', // 채널 이름
+    channelDescription: 'Notifies when the budget is exceeded', // 채널 설명
+    importance: Importance.high,
+    priority: Priority.high,
+    ticker: 'ticker',
+  );
+  const NotificationDetails notificationDetails =
+      NotificationDetails(android: androidNotificationDetails);
+
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    '예산 초과 알림',
+    '총 지출이 예산을 초과했습니다!',
+    notificationDetails,
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeNotifications();
+
+  // Firebase 및 알림 초기화
   try {
     print('Initializing Firebase...');
     await Firebase.initializeApp(
@@ -21,6 +72,10 @@ void main() async {
   } catch (e) {
     print('Firebase initialization failed: $e');
   }
+
+  await initializeNotifications();
+  print('Notifications initialized successfully');
+
   runApp(MyApp());
 }
 
@@ -44,7 +99,8 @@ class MyApp extends StatelessWidget {
                 bodyLarge: TextStyle(color: Colors.black),
                 bodyMedium: TextStyle(color: Colors.black),
                 bodySmall: TextStyle(color: Colors.black),
-                labelLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                labelLarge: TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.bold),
               ),
             ),
             darkTheme: ThemeData.dark().copyWith(
@@ -59,7 +115,8 @@ class MyApp extends StatelessWidget {
                 bodyLarge: TextStyle(color: Colors.white),
                 bodyMedium: TextStyle(color: Colors.white),
                 bodySmall: TextStyle(color: Colors.white),
-                labelLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                labelLarge: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold),
               ),
               colorScheme: ColorScheme.dark().copyWith(
                 surface: Colors.grey[850]!,
@@ -78,7 +135,9 @@ class MyApp extends StatelessWidget {
               '/': (context) => AuthHandler(),
               '/login': (context) => LoginScreen(),
               '/main': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {'initialIndex': 0};
+                final args = ModalRoute.of(context)?.settings.arguments
+                        as Map<String, dynamic>? ??
+                    {'initialIndex': 0};
                 return MainNavigation(initialIndex: args['initialIndex']);
               },
               '/statistics': (context) {

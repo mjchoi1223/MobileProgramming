@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // 날짜 형식화를 위해 사용
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class BudgetManagementScreen extends StatefulWidget {
   final String userId;
@@ -12,6 +14,7 @@ class BudgetManagementScreen extends StatefulWidget {
 }
 
 class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
+  late FlutterLocalNotificationsPlugin _notificationsPlugin;
   int totalExpense = 0; // 총 지출 변수
   int totalBudget = 0; // 총 예산 변수
   DateTime _selectedMonth = DateTime.now(); // 현재 선택된 월
@@ -20,10 +23,33 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
   @override
   void initState() {
     super.initState();
+    _notificationsPlugin = FlutterLocalNotificationsPlugin(); 
+    _initializeNotifications();
     _fetchOrCreateBudget(); // Firestore에서 예산 가져오거나 생성
     _fetchTotalExpense(); // Firestore에서 지출 합계 가져오기
     print('UserId: ${widget.userId}');
     print('DocId: $_docId');
+  }
+
+  void _initializeNotifications() {
+    const AndroidInitializationSettings androidInitializationSettings =
+        AndroidInitializationSettings('splash'); // 아이콘 설정 확인
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: androidInitializationSettings);
+
+    _notificationsPlugin.initialize(initializationSettings);
+
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'budget_exceeded_channel', // 채널 ID
+      'Budget Exceeded', // 채널 이름
+      description: 'Notifies when the budget is exceeded', // 채널 설명
+      importance: Importance.high,
+    );
+
+    _notificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
   /// 고유한 `docId` 생성 (userId + 월)
@@ -86,6 +112,9 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
       totalBudget = int.tryParse(_budgetController.text) ?? totalBudget;
     });
     _updateTotalBudget(); // Firestore에 업데이트
+    if (totalExpense > totalBudget && totalBudget > 0) {
+    _showBudgetExceededNotification();
+    }
   }
 
   /// Firestore에서 총 지출 합계 계산
@@ -111,6 +140,21 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
       setState(() {
         totalExpense = total;
       });
+
+      if (totalExpense > totalBudget && totalBudget > 0) {
+        // 마지막으로 알림이 발송된 상태인지 확인
+        final prefs = await SharedPreferences.getInstance();
+        final lastNotified = prefs.getBool('lastBudgetExceeded') ?? false;
+
+        if (!lastNotified) {
+          _showBudgetExceededNotification();
+          prefs.setBool('lastBudgetExceeded', true);
+        }
+      } else {
+        // 조건 만족하지 않을 때 플래그 초기화
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setBool('lastBudgetExceeded', false);
+      }
     } catch (e) {
       print('Error fetching total expense: $e');
     }
@@ -132,6 +176,33 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
     });
     _fetchOrCreateBudget();
     _fetchTotalExpense();
+  }
+
+  Future<void> _showBudgetExceededNotification() async {
+    // 알림 활성화 상태 확인
+    final prefs = await SharedPreferences.getInstance();
+    final isNotificationEnabled = prefs.getBool('notificationsEnabled') ?? true;
+
+    if (!isNotificationEnabled) return; // 알림이 비활성화된 경우 종료
+
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'budget_exceeded_channel',
+      'Budget Exceeded',
+      channelDescription: 'Notifies when the budget is exceeded',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidNotificationDetails);
+
+    await _notificationsPlugin.show(
+      1, // 고정된 ID로 알림 생성
+      '예산 초과 알림',
+      '총 지출이 설정한 예산을 초과했습니다!',
+      notificationDetails,
+    );
   }
 
   @override

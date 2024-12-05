@@ -66,6 +66,9 @@ class _MainNavigationState extends State<MainNavigation> {
 
     final pages = _getPages();
 
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+
     return Scaffold(
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -88,12 +91,13 @@ class _MainNavigationState extends State<MainNavigation> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.black,
+        selectedItemColor: isDarkMode ? Colors.greenAccent : Colors.green,
+        unselectedItemColor: isDarkMode ? Colors.grey : Colors.black,
         showUnselectedLabels: true,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
         elevation: 5,
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
       ),
     );
   }

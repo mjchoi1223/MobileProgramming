@@ -69,18 +69,36 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 _selectedType = index == 0 ? 'income' : 'expense';
               });
             },
+            borderColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            selectedBorderColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+            fillColor: _selectedType == 'income'
+                ? Colors.blueAccent
+                : Colors.redAccent,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text("수입", style: TextStyle(color: Colors.blue)),
+                child: Text(
+                  "수입",
+                  style: TextStyle(
+                    color: _selectedType == 'income'
+                        ? Colors.white
+                        : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.blue),
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text("지출", style: TextStyle(color: Colors.red)),
+                child: Text(
+                  "지출",
+                  style: TextStyle(
+                    color: _selectedType == 'expense'
+                        ? Colors.white
+                        : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.red),
+                  ),
+                ),
               ),
             ],
           ),
-
           SizedBox(height: 20),
           Expanded(
             child: FutureBuilder<QuerySnapshot>(

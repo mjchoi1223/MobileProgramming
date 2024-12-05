@@ -189,10 +189,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         _selectedType = 'income';
                       });
                     },
-                    child: Text("수입"),
+                    child: Text(
+                      "수입",
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _selectedType == 'income' ? Colors.blue : Colors.grey,
+                      backgroundColor: _selectedType == 'income' ? Colors.blue : Colors.grey,
                     ),
                   ),
                   ElevatedButton(
@@ -201,10 +207,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         _selectedType = 'expense';
                       });
                     },
-                    child: Text("지출"),
+                    child: Text(
+                      "지출",
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _selectedType == 'expense' ? Colors.red : Colors.grey,
+                      backgroundColor: _selectedType == 'expense' ? Colors.red : Colors.grey,
                     ),
                   ),
                 ],
@@ -258,10 +270,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
                       Navigator.pop(context);
                     },
                     child: Text("취소"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.grey[300],
+                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black
+                          : Colors.black,
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: _saveTransaction,
                     child: Text(widget.transactionId == null ? "저장" : "수정"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.blue,
+                      foregroundColor: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black
+                          : Colors.white,
+                    ),
                   ),
                 ],
               ),

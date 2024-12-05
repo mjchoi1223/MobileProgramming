@@ -115,6 +115,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textStyle = theme.textTheme.bodyLarge;
+
     if (userId == null) {
       return Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -147,7 +150,13 @@ class _BudgetScreenState extends State<BudgetScreen> {
                       ),
                       Text(
                         "${_focusedDay.year}년 ${_focusedDay.month}월",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.brightness == Brightness.dark 
+                              ? Colors.white 
+                              : theme.textTheme.titleLarge?.color, // 다크 모드: 화이트, 라이트 모드: 기본 색상
+                        ),
                       ),
                       IconButton(
                         icon: Icon(Icons.arrow_right),
@@ -159,50 +168,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Column(
-                        children: [
-                          Text(
-                            "수입",
-                            style: TextStyle(color: Colors.blue, fontSize: 16),
-                          ),
-                          Text(
-                            "$totalIncome",
-                            style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      _buildSummaryItem(
+                        label: "수입",
+                        value: totalIncome,
+                        color: Colors.blue,
                       ),
-                      Column(
-                        children: [
-                          Text(
-                            "지출",
-                            style: TextStyle(color: Colors.red, fontSize: 16),
-                          ),
-                          Text(
-                            "$totalExpense",
-                            style: TextStyle(
-                                color: Colors.red,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      _buildSummaryItem(
+                        label: "지출",
+                        value: totalExpense,
+                        color: Colors.red,
                       ),
-                      Column(
-                        children: [
-                          Text(
-                            "합계",
-                            style: TextStyle(color: Colors.black, fontSize: 16),
-                          ),
-                          Text(
-                            "${totalIncome - totalExpense}",
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      _buildSummaryItem(
+                        label: "합계",
+                        value: totalIncome - totalExpense,
+                        color: textStyle?.color ?? Colors.black,
                       ),
                     ],
                   ),
@@ -219,11 +198,31 @@ class _BudgetScreenState extends State<BudgetScreen> {
           Navigator.pushNamed(
             context,
             '/transaction',
-            arguments: {'type': 'income'}, // 기본값 또는 전달할 데이터 설정
+            arguments: {'type': 'income'},
           );
         },
         child: Icon(Icons.add),
       ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required String label,
+    required int value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Text(label, style: TextStyle(color: color, fontSize: 16)),
+        Text(
+          "$value",
+          style: TextStyle(
+            color: color,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 

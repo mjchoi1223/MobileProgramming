@@ -183,10 +183,32 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
     _fetchTotalExpense();
   }
 
+  Future<bool> _getOverBudgetAlertSetting() async {
+    try {
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.userId)
+          .get();
+
+      if (docSnapshot.exists) {
+        final settings = docSnapshot.data();
+        return settings?['over_budget_alert'] ?? true; // 기본값은 true로 설정
+      } else {
+        return true; // 문서가 없으면 기본값을 true로 설정
+      }
+    } catch (e) {
+      print("Error fetching over budget alert setting: $e");
+      return true; // 예외가 발생하면 기본값을 true로 설정
+    }
+  }
+
   Future<void> _showBudgetExceededNotification() async {
     // 알림 활성화 상태 확인
     final prefs = await SharedPreferences.getInstance();
     final isNotificationEnabled = prefs.getBool('notificationsEnabled') ?? true;
+    final overBudgetAlertEnabled = await _getOverBudgetAlertSetting();
+
+    if (!overBudgetAlertEnabled) return; // over_budget_alert이 false이면 알림을 울리지 않음
 
     if (!isNotificationEnabled) return; // 알림이 비활성화된 경우 종료
 
@@ -284,7 +306,7 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
     await _notificationsPlugin.show(
       2, // 알림 ID
       '예산 근접 알림',
-      '총 지출이 예산의 ${nearBudgetThreshold}%에 근접했습니다!',
+      '총 지출이 예산의 ${nearBudgetThreshold}% 초과했습니다!',
       notificationDetails,
     );
   }

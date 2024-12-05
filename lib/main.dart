@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:front/theme_provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 // 알림 초기화
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -59,7 +60,7 @@ Future<void> showBudgetExceededNotification() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await initializeDateFormatting();
   await initializeNotifications();
 
   // Firebase 및 알림 초기화

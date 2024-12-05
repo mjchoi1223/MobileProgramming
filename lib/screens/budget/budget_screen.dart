@@ -127,6 +127,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("가계부"),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(_isCalendarView ? Icons.list : Icons.calendar_today),

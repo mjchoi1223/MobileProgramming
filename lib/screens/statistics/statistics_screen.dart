@@ -38,6 +38,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("통계"),
+        centerTitle: true,
       ),
       body: Column(
         children: [

@@ -167,7 +167,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.transactionId == null ? "거래 내역 추가" : "거래 내역 수정"),
+        title: Text(widget.transactionId == null ? "거래 내역 추가" : "거래 내역 수정",), 
+        centerTitle: true,
         leading: BackButton(
           onPressed: () {
             Navigator.pop(context);

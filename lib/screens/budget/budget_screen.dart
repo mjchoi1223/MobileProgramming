@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:front/screens/transaction/transaction_screen.dart';
 
 class BudgetScreen extends StatefulWidget {
   @override
@@ -24,9 +25,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
     super.initState();
     _selectedDay = _focusedDay;
     _initializeUserId();
-    _calculateMonthlyTotals();
   }
-
 
   // Firebase에서 userId 가져오기
   Future<void> _initializeUserId() async {
@@ -40,15 +39,20 @@ class _BudgetScreenState extends State<BudgetScreen> {
       setState(() {
         userId = user.uid;
       });
+      _calculateMonthlyTotals();
     }
   }
 
   Stream<QuerySnapshot> _getTransactions(DateTime start, DateTime end) {
+    if (userId == null) {
+      return const Stream.empty(); // userId가 null이면 빈 스트림 반환
+    }
+
     return _firestore
         .collection('transactions')
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('date', isLessThan: Timestamp.fromDate(end))
-        .where('userId', isEqualTo: userId) // userId 추가
+        .where('userId', isEqualTo: userId) // userId 조건 추가
         .orderBy('date', descending: true) // 날짜 기준 내림차순 정렬
         .snapshots();
   }
@@ -78,6 +82,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
   }
 
   void _calculateMonthlyTotals() async {
+    if (userId == null) return;
+
     final startOfMonth = DateTime(_focusedDay.year, _focusedDay.month, 1);
     final endOfMonth = DateTime(_focusedDay.year, _focusedDay.month + 1, 0);
 
@@ -85,6 +91,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         .collection('transactions')
         .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfMonth))
         .where('date', isLessThan: Timestamp.fromDate(endOfMonth))
+        .where('userId', isEqualTo: userId) // userId 조건 추가
         .get();
 
     double income = 0;
@@ -108,6 +115,12 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (userId == null) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text("가계부"),
@@ -229,27 +242,67 @@ class _BudgetScreenState extends State<BudgetScreen> {
         }
 
         final transactions = snapshot.data!.docs;
+        final groupedTransactions = <String, List<Map<String, dynamic>>>{};
+
+        for (var transaction in transactions) {
+          final date = (transaction['date'] as Timestamp).toDate();
+          final formattedDate = "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+
+          if (!groupedTransactions.containsKey(formattedDate)) {
+            groupedTransactions[formattedDate] = [];
+          }
+          groupedTransactions[formattedDate]!.add({
+            'id': transaction.id,
+            ...transaction.data() as Map<String, dynamic>,
+          });
+        }
+
+        final groupedKeys = groupedTransactions.keys.toList();
 
         return ListView.builder(
-          itemCount: transactions.length,
+          itemCount: groupedKeys.length,
           itemBuilder: (context, index) {
-            final transaction = transactions[index];
-            final type = transaction['type']; // income 또는 expense
-            final category = transaction['category'];
-            final amount = transaction['amount'];
-            final date = (transaction['date'] as Timestamp).toDate();
-            final memo = transaction['memo'];
+            final dateKey = groupedKeys[index];
+            final dailyTransactions = groupedTransactions[dateKey]!;
 
-            return ListTile(
-              title: Text(category),
-              subtitle: Text(memo),
-              trailing: Text(
-                (type == 'income' ? "+" : "-") + "$amount",
-                style: TextStyle(
-                  color: type == 'income' ? Colors.blue : Colors.red,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  child: Text(
+                    "$dateKey",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
                 ),
-              ),
-              leading: Text("${date.day}일"),
+                ...dailyTransactions.map((transaction) {
+                  final type = transaction['type'];
+                  final category = transaction['category'];
+                  final amount = transaction['amount'];
+                  final memo = transaction['memo'];
+
+                  return ListTile(
+                    title: Text(category),
+                    subtitle: Text(memo),
+                    trailing: Text(
+                      (type == 'income' ? "+" : "-") + "$amount",
+                      style: TextStyle(
+                        color: type == 'income' ? Colors.blue : Colors.red,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransactionScreen(
+                            transactionId: transaction['id'], // 전달
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ],
             );
           },
         );
@@ -287,8 +340,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
           child: StreamBuilder<QuerySnapshot>(
             stream: _getTransactions(
               _selectedDay ?? _focusedDay,
-              _selectedDay?.add(Duration(days: 1)) ??
-                  _focusedDay.add(Duration(days: 1)),
+              _selectedDay?.add(Duration(days: 1)) ?? _focusedDay.add(Duration(days: 1)),
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {

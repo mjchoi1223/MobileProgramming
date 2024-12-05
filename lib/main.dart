@@ -10,9 +10,6 @@ import 'package:front/screens/statistics/statistics_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
   try {
     print('Initializing Firebase...');
     await Firebase.initializeApp(
@@ -37,21 +34,20 @@ class MyApp extends StatelessWidget {
         '/': (context) => AuthHandler(),
         '/login': (context) => LoginScreen(),
         '/main': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
-          final initialIndex = args['initialIndex'] ?? 0;
-          return MainNavigation(initialIndex: initialIndex);
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {'initialIndex': 0};
+          return MainNavigation(initialIndex: args['initialIndex']);
         },
         '/statistics': (context) {
           final userId = FirebaseAuth.instance.currentUser?.uid;
           if (userId == null) {
             return LoginScreen();
           }
-          return StatisticsScreen(userId: userId);  // userId 전달
+          return StatisticsScreen(userId: userId);
         },
         '/transaction': (context) {
           final userId = FirebaseAuth.instance.currentUser?.uid;
           if (userId != null) {
-            return TransactionScreen(userId: userId);
+            return TransactionScreen();
           } else {
             return LoginScreen();
           }
@@ -87,16 +83,20 @@ class AuthHandler extends StatelessWidget {
 
         if (snapshot.hasData) {
           print('User authenticated: ${snapshot.data}');
-          Future.microtask(() => Navigator.pushReplacementNamed(
-                context,
-                '/main',
-                arguments: {'initialIndex': 0},
-              ));
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            Navigator.pushReplacementNamed(
+              context,
+              '/main',
+              arguments: {'initialIndex': 0},
+            );
+          });
           return SizedBox.shrink();
         }
 
         print('User not authenticated. Redirecting to login screen...');
-        Future.microtask(() => Navigator.pushReplacementNamed(context, '/login'));
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.pushReplacementNamed(context, '/login');
+        });
         return SizedBox.shrink();
       },
     );

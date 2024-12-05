@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TransactionScreen extends StatefulWidget {
+  final String? transactionId; // Optional parameter for editing
 
-  final String userId;
+  TransactionScreen({this.transactionId});
 
-  TransactionScreen({required this.userId});
   @override
   _TransactionScreenState createState() => _TransactionScreenState();
 }
@@ -13,17 +13,116 @@ class TransactionScreen extends StatefulWidget {
 class _TransactionScreenState extends State<TransactionScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _memoController = TextEditingController();
-  String _selectedType = 'income'; // 기본값: 수입
+  String _selectedType = 'income';
   String _selectedCategory = '';
   DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
 
-  // 분류 항목
   final Map<String, List<String>> _categories = {
     'income': ['급여', '부업', '용돈', '투자', '기타'],
     'expense': ['식비', '교통', '쇼핑', '생활', '기타']
   };
 
-  // 날짜 선택
+  @override
+  void initState() {
+    super.initState();
+    if (widget.transactionId != null) {
+      _loadTransaction();
+    }
+  }
+
+  Future<void> _loadTransaction() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('transactions')
+          .doc(widget.transactionId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        setState(() {
+          _selectedType = data['type'];
+          _selectedCategory = data['category'];
+          _selectedDate = (data['date'] as Timestamp).toDate();
+          _amountController.text = data['amount'].toString();
+          _memoController.text = data['memo'];
+        });
+      }
+    } catch (e) {
+      print('Failed to load transaction: $e');
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveTransaction() async {
+    if (_amountController.text.isEmpty || _selectedCategory.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("모든 필드를 입력해주세요!")),
+      );
+      return;
+    }
+
+    final data = {
+      'type': _selectedType,
+      'date': Timestamp.fromDate(_selectedDate),
+      'amount': int.parse(_amountController.text),
+      'category': _selectedCategory,
+      'memo': _memoController.text,
+    };
+
+    try {
+      if (widget.transactionId == null) {
+        // Create a new transaction
+        await FirebaseFirestore.instance.collection('transactions').add(data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("저장되었습니다!")),
+        );
+      } else {
+        // Update an existing transaction
+        await FirebaseFirestore.instance
+            .collection('transactions')
+            .doc(widget.transactionId)
+            .update(data);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("수정되었습니다!")),
+        );
+      }
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("저장 실패: $e")),
+      );
+    }
+  }
+
+  Future<void> _deleteTransaction() async {
+    if (widget.transactionId == null) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('transactions')
+          .doc(widget.transactionId)
+          .delete();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("삭제되었습니다!")),
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("삭제 실패: $e")),
+      );
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -38,48 +137,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
     }
   }
 
-  // 저장 로직
-  void _saveTransaction() async {
-    if (_amountController.text.isEmpty || _selectedCategory.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("모든 필드를 입력해주세요!")),
-      );
-      return;
-    }
-
-    final data = {
-      'type': _selectedType,
-      'date': Timestamp.fromDate(_selectedDate),
-      'amount': int.parse(_amountController.text),
-      'category': _selectedCategory,
-      'memo': _memoController.text,
-      'userId': widget.userId,  // userId 추가
-    };
-
-    try {
-      await FirebaseFirestore.instance.collection('transactions').add(data);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("저장되었습니다!")),
-      );
-
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        '/main', // 이동할 경로
-        (route) => false, // 기존 화면 스택 제거
-        arguments: {'initialIndex': 0}, // BudgetScreen 탭 인덱스 전달
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("저장 실패: $e")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("거래 내역 추가"),
+        title: Text(widget.transactionId == null ? "거래 내역 추가" : "거래 내역 수정"),
         leading: BackButton(
           onPressed: () {
             Navigator.pop(context);
@@ -100,24 +168,26 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     onPressed: () {
                       setState(() {
                         _selectedType = 'income';
-                        _selectedCategory = ''; // 선택 초기화
                       });
                     },
                     child: Text("수입"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedType == 'income' ? Colors.blue : Colors.grey,
+                      backgroundColor: _selectedType == 'income'
+                          ? Colors.blue
+                          : Colors.grey,
                     ),
                   ),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
                         _selectedType = 'expense';
-                        _selectedCategory = ''; // 선택 초기화
                       });
                     },
                     child: Text("지출"),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedType == 'expense' ? Colors.red : Colors.grey,
+                      backgroundColor: _selectedType == 'expense'
+                          ? Colors.red
+                          : Colors.grey,
                     ),
                   ),
                 ],
@@ -154,7 +224,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     selected: _selectedCategory == category,
                     onSelected: (bool selected) {
                       setState(() {
-                        _selectedCategory = selected ? category : '';
+                        if (selected) _selectedCategory = category;
                       });
                     },
                   );
@@ -167,7 +237,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 decoration: InputDecoration(labelText: "메모"),
               ),
               SizedBox(height: 20),
-              // 버튼
+              // 저장/취소 버튼
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -179,7 +249,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   ),
                   ElevatedButton(
                     onPressed: _saveTransaction,
-                    child: Text("저장"),
+                    child: Text(widget.transactionId == null ? "저장" : "수정"),
                   ),
                 ],
               ),
@@ -187,6 +257,35 @@ class _TransactionScreenState extends State<TransactionScreen> {
           ),
         ),
       ),
+      floatingActionButton: widget.transactionId != null
+          ? FloatingActionButton(
+              onPressed: () async {
+                final shouldDelete = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text("삭제 확인"),
+                    content: Text("정말로 삭제하시겠습니까?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text("취소"),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text("삭제"),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (shouldDelete == true) {
+                  _deleteTransaction();
+                }
+              },
+              child: Icon(Icons.delete),
+              backgroundColor: Colors.red,
+            )
+          : null,
     );
   }
 }

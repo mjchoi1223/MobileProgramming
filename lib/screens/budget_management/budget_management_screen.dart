@@ -274,19 +274,24 @@ class _BudgetManagementScreenState extends State<BudgetManagementScreen> {
     print('임계값: $nearBudgetThreshold');
     final prefs = await SharedPreferences.getInstance();
     final a= prefs.getBool('lastNearBudgetAlert');
-    print('$a');
 
     //final lastNearBudgetAlert = prefs.getBool('lastNearBudgetAlert') ?? false;  // null인 경우 기본값을 false로 설정
     final lastNearBudgetAlert =false;
-// 예산 근접 알림 조건 체크
-    if (totalExpense >= totalBudget * (nearBudgetThreshold / 100) && !lastNearBudgetAlert) {
-      // 알림을 보냄
-      _showNearBudgetNotification();
-      // 알림 후에 상태를 'lastNearBudgetAlert'로 설정
-      prefs.setBool('lastNearBudgetAlert', true);
-    } else if (totalExpense < totalBudget * (nearBudgetThreshold / 100) && lastNearBudgetAlert) {
-      // 예산 근접 알림 상태가 해제되었을 때 플래그 리셋
+    // 예산 근접 알림 조건 체크
+    if (totalExpense > totalBudget && totalBudget > 0) {
+      // 예산 초과 알림이 이미 발송된 상태면 근접 알림을 보내지 않도록 설정
       prefs.setBool('lastNearBudgetAlert', false);
+    } else {
+      // 예산 초과 알림이 아닌 경우 근접 알림 조건 체크
+      if (totalExpense >= totalBudget * (nearBudgetThreshold / 100) && !lastNearBudgetAlert) {
+        // 알림을 보냄
+        _showNearBudgetNotification();
+        // 알림 후에 상태를 'lastNearBudgetAlert'로 설정
+        prefs.setBool('lastNearBudgetAlert', true);
+      } else if (totalExpense < totalBudget * (nearBudgetThreshold / 100) && lastNearBudgetAlert) {
+        // 예산 근접 알림 상태가 해제되었을 때 플래그 리셋
+        prefs.setBool('lastNearBudgetAlert', false);
+      }
     }
 
   }
